@@ -5,6 +5,7 @@ package utils
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -23,12 +24,13 @@ func getGoogleAuthConfig() *oauth2.Config {
 	}
 	ClientID := env.Get("googleClientId", " ")
 	ClientSecret := env.Get("googleClientSecret", " ")
+	PORT := env.Get("PORT", "8080")
 
 	var (
 		googleOauthConfig = &oauth2.Config{
 			ClientID:     ClientID,
 			ClientSecret: ClientSecret,
-			RedirectURL:  "http://localhost:3001/api/v1/auth/callback",
+			RedirectURL:  fmt.Sprintf("http://localhost:%v/api/v1/auth/callback", PORT),
 			Scopes:       []string{"https://www.googleapis.com/auth/userinfo.profile"},
 			Endpoint:     google.Endpoint,
 		}
