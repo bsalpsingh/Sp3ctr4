@@ -4,7 +4,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sp3ctr4/utils"
+	"github.com/sp3ctr4/auth"
+	"github.com/sp3ctr4/middlewares"
 )
 
 func Init(e *gin.Engine) {
@@ -20,11 +21,12 @@ func Init(e *gin.Engine) {
 
 	// user route
 	usersGrp := v1.Group("/users")
+	usersGrp.Use(middlewares.IsLoggedIn())
 
 	authGrp := v1.Group("/auth")
 
-	authGrp.GET("/login", utils.HandleGoogleLogin)
-	authGrp.GET("/callback", utils.HandleGoogleCallback)
+	authGrp.GET("/login", auth.HandleGoogleLogin)
+	authGrp.GET("/callback", auth.HandleGoogleCallback)
 
 	usersGrp.GET("/", getUsers)
 

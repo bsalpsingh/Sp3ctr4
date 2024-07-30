@@ -1,6 +1,6 @@
 // oauth/oauth.go
 
-package utils
+package auth
 
 import (
 	"context"
@@ -78,5 +78,19 @@ func HandleGoogleCallback(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"userInfo": userInfo})
+	if signedToken, err := signToken(userInfo); err != nil {
+		c.JSON(http.StatusForbidden, gin.H{
+			"data": err.Error(),
+		})
+		return
+	} else {
+
+		c.JSON(http.StatusOK, gin.H{
+			"data": gin.H{
+				"token": signedToken,
+				"user":  userInfo,
+			},
+		})
+	}
+
 }
