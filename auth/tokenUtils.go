@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/sp3ctr4/database"
 )
 
 var (
@@ -11,14 +12,14 @@ var (
 	t   *jwt.Token
 )
 
-func signToken(user map[string]interface{}) (string, error) {
+func signToken(user database.User) (string, error) {
 
 	key = []byte("my_super_secret_key")
 	t = jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
-			"name": user["name"],
+			"name": user.Name,
 
-			"id": user["id"],
+			"id": user.ID,
 		})
 	return t.SignedString(key)
 }

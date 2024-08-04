@@ -21,13 +21,13 @@ func Init(e *gin.Engine) {
 
 	// user route
 	usersGrp := v1.Group("/users")
+
 	usersGrp.Use(middlewares.IsLoggedIn())
+	usersGrp.GET("/", getUsers)
 
 	authGrp := v1.Group("/auth")
 
 	authGrp.GET("/login", auth.HandleGoogleLogin)
 	authGrp.GET("/callback", auth.HandleGoogleCallback)
-
-	usersGrp.GET("/", getUsers)
 
 }

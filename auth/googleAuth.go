@@ -11,6 +11,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gofor-little/env"
+	"github.com/sp3ctr4/database"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 )
@@ -31,7 +32,7 @@ func getGoogleAuthConfig() *oauth2.Config {
 			ClientID:     ClientID,
 			ClientSecret: ClientSecret,
 			RedirectURL:  fmt.Sprintf("http://localhost:%v/api/v1/auth/callback", PORT),
-			Scopes:       []string{"https://www.googleapis.com/auth/userinfo.profile"},
+			Scopes:       []string{"https://www.googleapis.com/auth/userinfo.profile", "https://www.googleapis.com/auth/userinfo.email"},
 			Endpoint:     google.Endpoint,
 		}
 	)
@@ -78,17 +79,45 @@ func HandleGoogleCallback(c *gin.Context) {
 		return
 	}
 
-	if signedToken, err := signToken(userInfo); err != nil {
+	email, emailOk := userInfo["email"].(string)
+	givenName, givenNameOk := userInfo["given_name"].(string)
+	familyName, familyNameOk := userInfo["family_name"].(string)
+	if !emailOk || !givenNameOk || !familyNameOk {
+		log.Println("missing user information")
+		c.Redirect(http.StatusTemporaryRedirect, "/")
+		return
+	}
+	// check if the user is presaent in the db, if no add user to db and sign token else query and sign token
+
+	var newUser database.User
+
+	if userQeuery := database.DB.Where(" email = ? ", userInfo["email"]).First(&newUser); userQeuery.Error != nil {
+
+		newRegisteredUser := database.User{
+			Name:  fmt.Sprintf("%v %v", givenName, familyName),
+			Email: email,
+		}
+		if userRegisterQuery := database.DB.Create(&newRegisteredUser); userRegisterQuery.Error != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"data": "failed to signup user",
+			})
+			c.Abort()
+			return
+		}
+		newUser = newRegisteredUser
+	}
+
+	if signedToken, err := signToken(newUser); err != nil {
 		c.JSON(http.StatusForbidden, gin.H{
 			"data": err.Error(),
 		})
 		return
 	} else {
 
-		c.JSON(http.StatusOK, gin.H{
+		c.IndentedJSON(http.StatusOK, gin.H{
 			"data": gin.H{
 				"token": signedToken,
-				"user":  userInfo,
+				"user":  newUser,
 			},
 		})
 	}
