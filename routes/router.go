@@ -5,12 +5,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/sp3ctr4/auth"
+	"github.com/sp3ctr4/controllers"
 	"github.com/sp3ctr4/middlewares"
 )
 
 func Init(e *gin.Engine) {
 	v1 := e.Group("/api/v1")
-
+	e.MaxMultipartMemory = 8 << 20
 	// home route
 
 	v1.GET("/", func(c *gin.Context) {
@@ -29,5 +30,11 @@ func Init(e *gin.Engine) {
 
 	authGrp.GET("/login", auth.HandleGoogleLogin)
 	authGrp.GET("/callback", auth.HandleGoogleCallback)
+
+	// media grp
+
+	mediaGrp := v1.Group("/media")
+
+	mediaGrp.POST("/upload", middlewares.IsLoggedIn(), controllers.HandleUpload)
 
 }
