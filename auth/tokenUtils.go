@@ -19,7 +19,8 @@ func signToken(user database.User) (string, error) {
 		jwt.MapClaims{
 			"name": user.Name,
 
-			"id": user.ID,
+			"id":    user.ID,
+			"email": user.Email,
 		})
 	return t.SignedString(key)
 }
