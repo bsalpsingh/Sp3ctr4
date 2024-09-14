@@ -3,9 +3,11 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"path/filepath"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/sp3ctr4/database"
 )
 
@@ -40,7 +42,7 @@ func HandleUpload(c *gin.Context) {
 
 	file, _ := c.FormFile("file")
 
-	sanitizedFilename := filepath.Base(file.Filename)
+	sanitizedFilename := filepath.Base(file.Filename)[:255]
 	extension := filepath.Ext(file.Filename)
 	videoExtensions := []string{
 		".mp4",
@@ -77,8 +79,22 @@ func HandleUpload(c *gin.Context) {
 		return
 	}
 
+	// get os home direcotory
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"data": "failed to initalize storage",
+		})
+		c.Abort()
+		return
+	}
+	userId := fmt.Sprint(user.ID)
+	newUUID := uuid.New().String()
+	destinationPath := filepath.Join(homeDir, "Desktop", "uploads", userId, newUUID+"-"+sanitizedFilename)
+	fmt.Println("destination", destinationPath)
+
 	// Upload the file to specific dst.
-	c.SaveUploadedFile(file, fmt.Sprintf("./fileuploads/%v", sanitizedFilename))
+	c.SaveUploadedFile(file, destinationPath)
 
 	c.String(http.StatusOK, fmt.Sprintf("'%s' uploaded!", file.Filename))
 }
